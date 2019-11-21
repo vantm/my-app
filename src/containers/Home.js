@@ -16,6 +16,16 @@ const TableButton = ({ onClick, data, text }) => (
   <button onClick={() => onClick(data)}>{text}</button>
 );
 
+const Counter = ({ value, onIncrement, onDecrement, onIncrementAsync }) => (
+  <div>
+    <button onClick={onIncrementAsync}>Increment after 1 second</button>{' '}
+    <button onClick={onIncrement}>Increment</button>{' '}
+    <button onClick={onDecrement}>Decrement</button>
+    <hr />
+    <div>Clicked: {value} times</div>
+  </div>
+);
+
 const PageSizePanel = ({ pageSize, onChange }) => (
   <div>
     Page size: {pageSize}
@@ -97,13 +107,21 @@ export class Home extends Component {
       tableHead,
     } = this.state;
 
-    const { pageIndex, pageSize, totalPages, items, isFetching } = this.props;
+    const {
+      pageIndex,
+      pageSize,
+      totalPages,
+      items,
+      isFetching,
+      sagaValue,
+      sagaAction,
+    } = this.props;
     const tableData = items.map(row => [
       row.id,
       row.name,
       row.age,
       <React.Fragment>
-        <Link to={'/edit/' + row.id}>edit</Link>
+        <Link to={'/edit/' + row.id}>edit</Link>{' '}
         <TableButton onClick={this.onRowClick} data={row.id} text='delete' />
       </React.Fragment>,
     ]);
@@ -119,6 +137,12 @@ export class Home extends Component {
           />
         ) : (
           <React.Fragment>
+            <Counter
+              value={sagaValue}
+              onIncrement={() => sagaAction('INCREMENT')}
+              onDecrement={() => sagaAction('DECREMENT')}
+              onIncrementAsync={() => sagaAction('INCREMENT_ASYNC')}
+            />
             {isFetching ? (
               <LoadingText />
             ) : (
@@ -147,6 +171,8 @@ const mapStateToProps = state => {
     error,
   } = state.People;
 
+  const { value } = state.Counter;
+
   return {
     pageIndex,
     pageSize,
@@ -155,12 +181,16 @@ const mapStateToProps = state => {
     isFetching,
     isFetchingFailure,
     error,
+    sagaValue: value,
   };
 };
 
 const mapDispatchToProps = {
   fetchPeople,
   changePageSize,
+  sagaAction: type => dispatch => {
+    dispatch({ type });
+  },
 };
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Home));
